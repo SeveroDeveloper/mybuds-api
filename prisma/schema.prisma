@@ -1,0 +1,13 @@
+// Database schema. No models yet: the domain model arrives in Phase 2.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  // Generated TypeScript lives in src/ so `nest build` compiles it with the app.
+  // It is gitignored and rebuilt by `npm install` (postinstall) or `npm run db:generate`.
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

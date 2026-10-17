@@ -1,5 +1,5 @@
 import { plainToInstance, Type } from 'class-transformer';
-import { IsIn, IsInt, Max, Min, validateSync } from 'class-validator';
+import { IsIn, IsInt, Matches, Max, Min, validateSync } from 'class-validator';
 
 /**
  * Every environment variable the app reads, with its rules.
@@ -15,6 +15,15 @@ export class Env {
   @Min(1)
   @Max(65535)
   PORT: number = 3000;
+
+  /**
+   * Pooled Postgres URL used by the running app. Required, no default.
+   * (DIRECT_URL is only read by the Prisma CLI for migrations, so the app doesn't ask for it.)
+   */
+  @Matches(/^postgres(ql)?:\/\/.+/, {
+    message: 'DATABASE_URL must be a postgres:// or postgresql:// URL',
+  })
+  DATABASE_URL: string;
 }
 
 export function validateEnv(raw: Record<string, unknown>): Env {
