@@ -19,9 +19,14 @@ export class Env {
   /**
    * Pooled Postgres URL used by the running app. Required, no default.
    * (DIRECT_URL is only read by the Prisma CLI for migrations, so the app doesn't ask for it.)
+   *
+   * sslmode must be explicit: if it's missing or mistyped (e.g. `??sslmode=`), pg silently
+   * connects WITHOUT TLS. Neon refuses that, but other servers would accept plaintext.
+   * (Use sslmode=disable only for a local/CI Postgres.)
    */
-  @Matches(/^postgres(ql)?:\/\/.+/, {
-    message: 'DATABASE_URL must be a postgres:// or postgresql:// URL',
+  @Matches(/^postgres(ql)?:\/\/[^?]+\?(.*&)?sslmode=[a-z-]+(&|$)/, {
+    message:
+      'DATABASE_URL must be a postgres:// or postgresql:// URL with an explicit sslmode parameter',
   })
   DATABASE_URL: string;
 }

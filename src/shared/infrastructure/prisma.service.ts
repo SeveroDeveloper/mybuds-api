@@ -18,6 +18,9 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     super({
       adapter: new PrismaPg({
         connectionString: config.get('DATABASE_URL', { infer: true }),
+        // pg waits forever for a connection by default; a black-holed network
+        // would hang every request (and the health check). 5s covers a Neon cold start.
+        connectionTimeoutMillis: 5_000,
       }),
     });
   }
