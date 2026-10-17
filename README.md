@@ -29,6 +29,10 @@ For `npm run test:e2e`, also create `.env.test` with the same keys pointing to t
 | `npm run test:e2e` | API end-to-end tests (Neon `test` branch, via `.env.test`) |
 | `npm run db:generate` | Regenerate the Prisma client after editing `prisma/schema.prisma` |
 
+## Docker
+
+`Dockerfile` builds the production image (multi-stage, non-root, `node dist/main.js` on port 3000). It is built and smoke-tested in CI; there is no local Docker workflow. Configure it with environment variables (`DATABASE_URL`, `PORT`), never with files baked into the image.
+
 ## License
 
 All rights reserved. See [LICENSE](LICENSE).
