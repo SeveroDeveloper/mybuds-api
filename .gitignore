@@ -5,6 +5,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# generated prisma client (rebuilt by `npm install` / `npm run db:generate`)
+src/generated/
+
 # env / secrets (keep the example)
 .env
 .env.*

@@ -23,10 +23,25 @@ Guidance for Claude Code in this repository.
 - **Concurrency:** `version` column + 409, idempotent "set" endpoints, Idempotency-Key on money-creating POSTs.
 - Code identifiers in English; user-facing errors are returned as codes (translated by the web).
 
+## Testing
+
+**Testing Trophy** (details in ../mybuds/docs/ARCHITECTURE.md §10): integration tests are the biggest layer; unit tests only for dense pure logic (the money engine). Every test must guard a bug you can name. Assert behavior, not calls (fakes over mocks). No tests for getters, DTOs, wiring or framework behavior. **No coverage target.**
+
+Stack: **Vitest** (runner, `*.spec.ts` unit / `*.e2e-spec.ts` e2e) · **Supertest** (HTTP against the booted app) · **@nestjs/testing** (builds the app in tests) · **fast-check** (property tests, from Phase 2) · real Postgres for integration (Neon `test` branch locally, `postgres:18` in CI).
+
 ## Definition of Done
 
 See `../mybuds/docs/ROADMAP.md`. Unit tests for domain rules, integration tests (incl. cross-bud + concurrency), API e2e for the main flow, OpenAPI updated with no unplanned breaking change, migration reviewed.
 
 ## How to work with this user
 
-The user is building mybuds **to learn software engineering for their next job**. Explain every decision briefly: why, what's interesting, the trade-off (🎓 / ⚖️). Keep explanations short. Name the AWS equivalent when touching infrastructure. Commit messages: **one line**, Conventional Commits, no body. Never commit secrets (`.env` is gitignored). Work on branches + PRs; don't push to `main` or merge unless asked.
+**Start by reading `../mybuds/docs/guides/backend-guide.md`**: the current state, the next steps, and the safety rules.
+
+- The user is building mybuds **to learn software engineering for their next job**.
+- **Mode A:** you write the code, and **every code change gets an explanation**: why, what's interesting, the trade-off (🎓 / ⚖️). Keep it short.
+- Work in **small/medium pieces** (a few files each), and pause after each one so the user can review it.
+- Name the AWS equivalent when touching infrastructure.
+- Commit messages: **one line**, Conventional Commits, no body.
+- Never commit secrets (`.env` is gitignored), and never ask the user to paste them into chat.
+- Work on branches + PRs; don't push to `main` or merge unless asked.
+- **Never kill processes by name** (e.g. `taskkill /IM node.exe`). Stop only the specific PID you started.

@@ -1,0 +1,37 @@
+# Dependabot opens PRs to update dependencies; CI must pass before you merge them.
+# Grouped and weekly so it doesn't flood the repo with one PR per package.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Minor/patch updates in one PR; majors stay separate (they can break things).
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    # Prisma CLI and client must be the same exact version: update them together.
+    # (Prisma 8 is a different API: a deliberate migration, not a Dependabot bump.)
+    ignore:
+      - dependency-name: 'prisma'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@prisma/*'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  # The node:24-slim base image in the Dockerfile.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # Stay on Node 24 (.nvmrc); moving to a new major is a deliberate change.
+      - dependency-name: node
+        update-types: [version-update:semver-major]

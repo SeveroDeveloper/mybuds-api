@@ -1,0 +1,19 @@
+# Keep the build context small and secret-free: only what the Dockerfile COPYs matters.
+node_modules/
+dist/
+coverage/
+src/generated/
+*.tsbuildinfo
+
+# secrets: never baked into an image (the runtime gets env vars from the platform)
+.env
+.env.*
+
+# not needed to build or run
+.git/
+.github/
+.claude/
+.zed/
+test/
+*.md
+*.log

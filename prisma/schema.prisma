@@ -1,0 +1,18 @@
+// Database schema. No models yet: the domain model arrives in Phase 2.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider            = "prisma-client"
+  // Generated TypeScript lives in src/ so `nest build` compiles it with the app.
+  // It is gitignored and rebuilt by `npm install` (postinstall) or `npm run db:generate`.
+  output              = "../src/generated/prisma"
+  // Explicit, never inferred: without these, Prisma guesses from tsconfig.json, and in the
+  // Docker build (which generates before tsconfig is copied) it emitted `.ts` imports
+  // that Node can't load. ESM + `.js` imports match our "type": "module" + nodenext setup.
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
