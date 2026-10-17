@@ -1,0 +1,107 @@
+# Runs on every pull request (and on main after a merge).
+# Two jobs in parallel: "checks" (code quality + tests) and "image" (the Docker image really boots).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push to the same PR cancels the run that is now outdated.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: the jobs only read the repo.
+permissions:
+  contents: read
+
+env:
+  # Throwaway Postgres started next to each job (see `services`). Not a secret.
+  # sslmode=disable: the service container has no TLS (our env validation needs sslmode explicit).
+  DATABASE_URL: postgresql://mybuds:mybuds@localhost:5432/mybuds_test?sslmode=disable
+  DIRECT_URL: postgresql://mybuds:mybuds@localhost:5432/mybuds_test?sslmode=disable
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: mybuds
+          POSTGRES_PASSWORD: mybuds
+          POSTGRES_DB: mybuds_test
+        ports: ['5432:5432']
+        # Steps start only once Postgres accepts connections.
+        options: >-
+          --health-cmd "pg_isready -U mybuds"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Exact lockfile install; postinstall generates the Prisma client.
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      # Once migrations exist: `npx prisma migrate deploy` goes here (uses DIRECT_URL).
+      - run: npm run test:e2e
+      - run: npm run build
+
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: mybuds
+          POSTGRES_PASSWORD: mybuds
+          POSTGRES_DB: mybuds_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mybuds"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # BuildKit builder: needed for the cache mounts in the Dockerfile and the GitHub cache below.
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true # keep the image in the runner's Docker so we can run it
+          push: false # publishing to GHCR happens in the deploy workflow
+          tags: mybuds-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The real proof: start the production image exactly like the platform will
+      # (config only via env vars) and require a 200 from the health endpoint.
+      - name: Smoke test image
+        run: |
+          docker run -d --name api --network host \
+            -e DATABASE_URL="$DATABASE_URL" -e PORT=3000 mybuds-api:ci
+          curl --fail --silent --show-error \
+            --retry 15 --retry-delay 1 --retry-all-errors \
+            http://localhost:3000/api/v1/health
+          echo
+          test "$(docker inspect -f '{{.Config.User}}' mybuds-api:ci)" = "node"
+
+      - name: Container logs
+        if: always()
+        run: docker logs api || true
