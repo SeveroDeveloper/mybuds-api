@@ -23,6 +23,12 @@ Guidance for Claude Code in this repository.
 - **Concurrency:** `version` column + 409, idempotent "set" endpoints, Idempotency-Key on money-creating POSTs.
 - Code identifiers in English; user-facing errors are returned as codes (translated by the web).
 
+## Testing
+
+**Testing Trophy** (details in ../mybuds/docs/ARCHITECTURE.md §10): integration tests are the biggest layer; unit tests only for dense pure logic (the money engine). Every test must guard a bug you can name. Assert behavior, not calls (fakes over mocks). No tests for getters, DTOs, wiring or framework behavior. **No coverage target.**
+
+Stack: **Vitest** (runner, `*.spec.ts` unit / `*.e2e-spec.ts` e2e) · **Supertest** (HTTP against the booted app) · **@nestjs/testing** (builds the app in tests) · **fast-check** (property tests, from Phase 2) · real Postgres for integration (Neon `test` branch locally, `postgres:18` in CI).
+
 ## Definition of Done
 
 See `../mybuds/docs/ROADMAP.md`. Unit tests for domain rules, integration tests (incl. cross-bud + concurrency), API e2e for the main flow, OpenAPI updated with no unplanned breaking change, migration reviewed.
