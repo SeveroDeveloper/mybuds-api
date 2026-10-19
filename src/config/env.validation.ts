@@ -24,6 +24,11 @@ export class Env {
   @Max(65535)
   PORT: number = 3000;
 
+  /** Minimum log level. "silent" turns logs off (used by the e2e tests). */
+  @IsIn(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+  LOG_LEVEL:
+    'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent' = 'info';
+
   /** Commit SHA baked into the Docker image (build arg); "dev" when running from source. */
   @IsString()
   APP_VERSION: string = 'dev';
