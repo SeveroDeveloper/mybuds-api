@@ -2,7 +2,7 @@
 
 Backend for **mybuds**, a personal-finance app that divides each month's income across debts, bills, savings goals and investments, for individuals and couples.
 
-**Stack:** TypeScript · NestJS 12 (Express) · PostgreSQL 18 + Prisma · Vitest · Docker · GitHub Actions · Koyeb.
+**Stack:** TypeScript · NestJS 12 (Express) · PostgreSQL 18 + Prisma · Vitest · Docker · GitHub Actions · Render.
 **Architecture:** modular monolith, DDD + hexagonal (ports & adapters), SOLID.
 
 ## Run locally
