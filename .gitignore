@@ -15,6 +15,7 @@ src/generated/
 
 # tests
 coverage/
+.vitest/
 
 # logs / os / editor
 *.log

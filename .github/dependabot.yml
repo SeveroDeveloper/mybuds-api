@@ -6,8 +6,15 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # A package joins the FIRST group that matches it, so the families come first.
     groups:
-      # Minor/patch updates in one PR; majors stay separate (they can break things).
+      # Families that must always share a version: updated together, majors included.
+      # (Separately, vitest 5 + coverage-v8 4 can't even install: PRs #7/#8.)
+      vitest:
+        patterns: ['vitest', '@vitest/*']
+      nestjs:
+        patterns: ['@nestjs/*']
+      # Everything else: minor/patch in one PR; majors stay separate (they can break things).
       npm-minor-and-patch:
         update-types: [minor, patch]
     # Prisma CLI and client must be the same exact version: update them together.
@@ -20,6 +27,10 @@ updates:
       # Node's type definitions must match the Node we run (24, from .nvmrc).
       - dependency-name: '@types/node'
         update-types: [version-update:semver-major]
+      # TypeScript 7.0 ships only the `tsc` binary; the Nest CLI needs the compiler API,
+      # expected back in 7.1 (PR #2 failed on it). Dependabot will offer 7.1+ when it lands.
+      - dependency-name: 'typescript'
+        versions: ['>=7.0.0 <7.1.0']
 
   - package-ecosystem: github-actions
     directory: /
