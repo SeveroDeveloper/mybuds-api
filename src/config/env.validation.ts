@@ -1,5 +1,13 @@
 import { plainToInstance, Type } from 'class-transformer';
-import { IsIn, IsInt, Matches, Max, Min, validateSync } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsString,
+  Matches,
+  Max,
+  Min,
+  validateSync,
+} from 'class-validator';
 
 /**
  * Every environment variable the app reads, with its rules.
@@ -15,6 +23,10 @@ export class Env {
   @Min(1)
   @Max(65535)
   PORT: number = 3000;
+
+  /** Commit SHA baked into the Docker image (build arg); "dev" when running from source. */
+  @IsString()
+  APP_VERSION: string = 'dev';
 
   /**
    * Pooled Postgres URL used by the running app. Required, no default.
