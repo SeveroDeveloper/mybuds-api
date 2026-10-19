@@ -17,6 +17,9 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: '@prisma/*'
         update-types: [version-update:semver-major]
+      # Node's type definitions must match the Node we run (24, from .nvmrc).
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
