@@ -27,11 +27,11 @@ describe('Health (e2e)', () => {
     beforeAll(async () => (app = await bootApp()));
     afterAll(() => app.close());
 
-    it('GET /api/v1/health returns 200 with api and db ok', () => {
+    it('GET /api/v1/health returns 200 with api and db ok, and the running version', () => {
       return request(app.getHttpServer())
         .get('/api/v1/health')
         .expect(200)
-        .expect({ api: 'ok', db: 'ok' });
+        .expect({ api: 'ok', db: 'ok', version: 'dev' });
     });
 
     it('unversioned routes do not exist', () => {
@@ -57,7 +57,7 @@ describe('Health (e2e)', () => {
       return request(app.getHttpServer())
         .get('/api/v1/health')
         .expect(503)
-        .expect({ api: 'ok', db: 'down' });
+        .expect({ api: 'ok', db: 'down', version: 'dev' });
     });
   });
 });

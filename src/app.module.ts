@@ -10,7 +10,7 @@ import { PrismaModule } from './shared/infrastructure/prisma.module.js';
       isGlobal: true,
       validate: validateEnv,
       // Tests read .env.test (Neon "test" branch) so they never touch dev data.
-      // Real environment variables always win over the file (CI, Koyeb).
+      // Real environment variables always win over the file (CI, Render).
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
     PrismaModule,

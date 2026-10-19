@@ -1,6 +1,5 @@
-# Runs after every merge to main: builds the production image and publishes it to GHCR.
+# Runs after every merge to main: publish the image → migrate the DB → deploy on Render → verify.
 # Branch protection guarantees main already passed CI (PR + required checks, up to date).
-# Next pieces will add: prisma migrate deploy → Koyeb deploy → smoke test of the public URL.
 name: Deploy
 
 on:
@@ -27,8 +26,6 @@ jobs:
     permissions:
       contents: read
       packages: write # push to GHCR with the built-in GITHUB_TOKEN (no personal token)
-    outputs:
-      image: ${{ env.IMAGE }}:${{ github.sha }}
     steps:
       - uses: actions/checkout@v7
 
@@ -50,6 +47,7 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:main
+          build-args: GIT_SHA=${{ github.sha }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -58,3 +56,59 @@ jobs:
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The production environment holds the secrets and only accepts runs from main.
+    environment:
+      name: production
+      url: ${{ vars.PUBLIC_URL }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Only the Prisma CLI is needed here; skip postinstall (no client generation).
+      - run: npm ci --ignore-scripts
+
+      # Migrations run BEFORE the new code goes live, so new code never meets an old schema.
+      # (Schema changes must be backward compatible: expand → contract, see ARCHITECTURE §7.)
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      # The deploy hook URL is a secret: GitHub masks it in logs, and we never echo it.
+      # imgURL overrides the tag for this deploy only: Render runs exactly this commit's image.
+      - name: Trigger Render deploy
+        run: |
+          curl --fail --silent --show-error --get "$HOOK" \
+            --data-urlencode "imgURL=$IMAGE:$GITHUB_SHA" -o /dev/null
+          echo "Render deploy requested for $IMAGE:$GITHUB_SHA"
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+      # The old version keeps answering 200 until Render swaps instances, so "200" alone
+      # proves nothing. Wait until the public URL reports THIS commit and a healthy DB.
+      - name: Smoke test production
+        run: |
+          for attempt in $(seq 1 60); do
+            body=$(curl --silent --max-time 90 "$PUBLIC_URL/api/v1/health" || true)
+            version=$(echo "$body" | jq -r '.version // empty' 2>/dev/null || true)
+            db=$(echo "$body" | jq -r '.db // empty' 2>/dev/null || true)
+            echo "attempt $attempt: version=${version:-?} db=${db:-?}"
+            if [ "$version" = "$GITHUB_SHA" ] && [ "$db" = "ok" ]; then
+              echo "Production is running $GITHUB_SHA with a healthy database."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Production did not report $GITHUB_SHA with db ok within ~10 minutes."
+          exit 1
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}

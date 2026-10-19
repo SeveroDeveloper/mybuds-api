@@ -37,6 +37,11 @@ RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev --omit=optional --ign
 
 COPY --from=build /app/dist ./dist
 
+# The commit SHA this image was built from, reported by /api/v1/health. Declared last:
+# it changes on every commit, and everything after an ARG is rebuilt when it changes.
+ARG GIT_SHA=unknown
+ENV APP_VERSION=$GIT_SHA
+
 # Run as the unprivileged "node" user that ships with the image, not root.
 USER node
 EXPOSE 3000
