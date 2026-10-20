@@ -15,10 +15,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  # GHCR names must be lowercase.
-  IMAGE: ghcr.io/severodeveloper/mybuds-api
-
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -27,6 +23,11 @@ jobs:
       contents: read
       packages: write # push to GHCR with the built-in GITHUB_TOKEN (no personal token)
     steps:
+      # ghcr.io/<owner>/<repo>, lowercased (GHCR requires it). Derived, not hard-coded:
+      # renaming the GitHub account (SeveroDeveloper → sevsdev) broke the hard-coded name once.
+      - name: Image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v7
 
       - uses: docker/setup-buildx-action@v4
@@ -66,6 +67,11 @@ jobs:
       name: production
       url: ${{ vars.PUBLIC_URL }}
     steps:
+      # ghcr.io/<owner>/<repo>, lowercased (GHCR requires it). Derived, not hard-coded:
+      # renaming the GitHub account (SeveroDeveloper → sevsdev) broke the hard-coded name once.
+      - name: Image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
