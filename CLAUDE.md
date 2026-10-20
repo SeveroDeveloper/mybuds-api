@@ -43,5 +43,6 @@ See `../mybuds/docs/ROADMAP.md`. Unit tests for domain rules, integration tests 
 - Name the AWS equivalent when touching infrastructure.
 - Commit messages: **one line**, Conventional Commits, no body.
 - Never commit secrets (`.env` is gitignored), and never ask the user to paste them into chat.
-- Work on branches + PRs; don't push to `main` or merge unless asked.
+- Work on branches + PRs; don't push to `main` or merge unless asked. **Exception:** the docs hub (`../mybuds`) commits straight to its `main`, and you may push those without asking.
+- After each piece, record the new state in `../mybuds/docs/guides/backend-guide.md` §4 (it's the hand-off between sessions and machines).
 - **Never kill processes by name** (e.g. `taskkill /IM node.exe`). Stop only the specific PID you started.
